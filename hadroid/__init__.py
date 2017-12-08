@@ -12,12 +12,13 @@ def _load_config_from_path(cfg_path):
     if cfg_path is not None and os.path.isfile(cfg_path):
         spec = importlib.util.spec_from_file_location(".", cfg_path)
         cfg_m = importlib.util.module_from_spec(spec)
+        import ipdb; ipdb.set_trace()
         spec.loader.exec_module(cfg_m)
         return dict((k, getattr(cfg_m, k)) for k in
                     dir(cfg_m) if str.isupper(k))
     else:
-        raise Exception("Path '{0}' is not a valid config".format(
-            cfg_path))
+        raise Exception("Hadroid config not found. Either set HADROID_CONFIG"
+            " or create 'hadroid.cfg' in current directory")
 
 
 def load_default_config():
@@ -26,11 +27,9 @@ def load_default_config():
     return _load_config_from_path(cfg_path)
 
 
-def load_config_from_env():
+def load_user_config():
     """Load the extra configuration from environment."""
-    cfg_path = os.environ.get('HADROID_CONFIG')
-    if not cfg_path:
-        raise Exception('HADROID_CONFIG variable not set.')
+    cfg_path = os.environ.get('HADROID_CONFIG') or 'hadroid.cfg'
     return _load_config_from_path(cfg_path)
 
 
@@ -57,7 +56,7 @@ class Config(object):
         if self_cfg is None:
             # Load the configuration from the environment
             self_cfg = load_default_config()
-            self_cfg.update(load_config_from_env())
+            self_cfg.update(load_user_config())
             self.cfg = self_cfg
         if attr in self_cfg:
             return self_cfg[attr]
